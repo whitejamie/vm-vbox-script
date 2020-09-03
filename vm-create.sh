@@ -2,9 +2,7 @@
 ################################################################################
 # README
 # TODO:
-#    - Currently hard coded for a unattended install of RedHat based distro 
-#      guest OS using Ubuntu host. This is to get around bug in VirtualBox...
-#
+#    - Add notes to read me about workaround
 #          There's a bug in Virtual Box's VBoxManage unattended install. It 
 #          looks in the wrong location for virtualbox/UnattendedTemplates. On 
 #          Debian/RedHat host machines it is located here: 
@@ -12,16 +10,27 @@
 #          See https://www.virtualbox.org/ticket/17335
 #
 #    - Post installation script for further modifications?
-#    - Use input argument for vm_name
+#    - Use input argument for vm_name, or append date time
 #    - SSH server setup, etc.
-
+#    - Move parameters to external file shared with other scripts
+#    - Set key mapping, get full list and set (as super user):
+#        localectl list-keymaps
+#        localectl set-keymap us-alt-intl
+#    - By default ethernet isn't enabled and connected, need to script:
+#        ethernet_dev_name=$(nmcli -f TYPE,DEVICE device | grep ^ethernet | awk '{print $2}')
+#        nmcli con add type ethernet con-name my-office ifname $ethernet_device_name
+#        nmcli con up my-office
+#
 ################################################################################
 #vm_name=$1
 vm_name="auto_centos_vm_test1"
-vm_hostname="vboxhost.localdomain"
+vm_hostname="localhost.localdomain"
 vm_user_name="vboxuser"
 vm_user_password="changeme"
 vm_country="ES"
+# For locale and country codes see:
+#  https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
+vm_locale="en_GB"
 vm_time_zone="CEST"
 
 # Checksum for iso image from:
@@ -98,7 +107,7 @@ templates_workaround_options=""
 fi
 
 VBoxManage unattended install $vm_name --user=$vm_user_name \
-    --password=$vm_user_password --country=$vm_country \
+    --password=$vm_user_password --country=$vm_country --locale=$vm_locale \
     --time-zone=$vm_time_zone --hostname=$vm_hostname --iso=$iso_download_file \
     $templates_workaround_options \
     --start-vm=gui
