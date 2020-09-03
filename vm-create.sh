@@ -89,11 +89,18 @@ VBoxManage storageattach $vm_name --storagectl "IDE Controller" --port 1 \
 VBoxManage modifyvm $vm_name --boot1 dvd --boot2 disk --boot3 none --boot4 none
 
 echo "Unattended install..."
+alt_vbox_templates_dir="/usr/lib/virtualbox/UnattendedTemplates"
+if [[ -d $alt_vbox_templates_dir ]]; then
+templates_workaround_options="--script-template $alt_vbox_templates_dir/redhat67_ks.cfg \
+--post-install-template $alt_vbox_templates_dir/redhat_postinstall.sh"
+else
+templates_workaround_options=""
+fi
+
 VBoxManage unattended install $vm_name --user=$vm_user_name \
     --password=$vm_user_password --country=$vm_country \
     --time-zone=$vm_time_zone --hostname=$vm_hostname --iso=$iso_download_file \
-    --script-template /usr/lib/virtualbox/UnattendedTemplates/redhat67_ks.cfg \
-    --post-install-template /usr/lib/virtualbox/UnattendedTemplates/redhat_postinstall.sh \
+    $templates_workaround_options \
     --start-vm=gui
 
 echo "Finished script."
