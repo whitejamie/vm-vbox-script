@@ -1,28 +1,5 @@
 #!/bin/bash
 ################################################################################
-# README
-# TODO:
-#    - Add notes to read me about workaround
-#          There's a bug in Virtual Box's VBoxManage unattended install. It 
-#          looks in the wrong location for virtualbox/UnattendedTemplates. On 
-#          Debian/RedHat host machines it is located here: 
-#          /usr/lib/virtualbox/UnattendedTemplates/.
-#          See https://www.virtualbox.org/ticket/17335
-#
-#    - Post installation script for further modifications?
-#    - Use input argument for vm_name, or append date time
-#    - SSH server setup, etc.
-#    - Move parameters to external file shared with other scripts
-#    - Set key mapping, get full list and set (as super user):
-#        localectl list-keymaps
-#        localectl set-keymap us-alt-intl
-#    - By default ethernet isn't enabled and connected, need to script:
-#        ethernet_dev_name=$(nmcli -f TYPE,DEVICE device | grep ^ethernet | awk '{print $2}')
-#        nmcli con add type ethernet con-name my-office ifname $ethernet_device_name
-#        nmcli con up my-office
-#
-################################################################################
-#vm_name=$1
 vm_name="auto_centos_vm_test1"
 vm_hostname="localhost.localdomain"
 vm_user_name="vboxuser"
