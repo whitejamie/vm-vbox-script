@@ -1,28 +1,18 @@
 #!/bin/bash
-################################################################################
-vm_name="auto_centos_vm_test1"
-vm_hostname="localhost.localdomain"
-vm_user_name="vboxuser"
-vm_user_password="changeme"
-vm_country="ES"
-# For locale and country codes see:
-#  https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
-vm_locale="en_GB"
-vm_time_zone="CEST"
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# Checksum for iso image from:
-#     https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2003?action=show&redirect=Manuals%2FReleaseNotes%2FCentOS7
-iso_web="http://centos.uvigo.es/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
-iso_file_hash="659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193"
-ostype="RedHat_64"
+source $dir/lib/get_config.sh
 
-################################################################################
+vm_name=$(get_config "vm_name")
+iso_web=$(get_config "iso_web")
 
-install_dir=`pwd`
+install_dir=$dir
 download_dir=$install_dir"/downloads"
 vm_dir=$install_dir"/vm"
 iso_file=${iso_web##http*\/}
 iso_download_file=$download_dir/$iso_file
+
+################################################################################
 
 err_report() {
     echo "Error on line $1"
@@ -35,20 +25,20 @@ mkdir -p $download_dir
 wget -nc -P $download_dir $iso_web
 
 echo ".iso checksum verification..."
-echo "$iso_file_hash $iso_download_file" | sha256sum --check --status
+echo "$(get_config "iso_file_hash") $iso_download_file" | sha256sum --check --status
 if [ $? != 0 ]; then
   echo '.iso download checksum failed.'
   exit 1
 fi
 
 echo "Creating VM..."
-VBoxManage createvm --name $vm_name --ostype $ostype --register \
+VBoxManage createvm --name $vm_name --ostype $(get_config "ostype") --register \
     --basefolder $vm_dir
 
 echo "Set number of CPUs and memory..."
-VBoxManage modifyvm $vm_name --cpus 1
+VBoxManage modifyvm $vm_name --cpus $(get_config "vm_cpus")
 VBoxManage modifyvm $vm_name --ioapic on
-VBoxManage modifyvm $vm_name --memory 2048 --vram 16 
+VBoxManage modifyvm $vm_name --memory $(get_config "vm_memory_mb") --vram $(get_config "vm_vram_mb") 
 
 echo "Set network..."
 VBoxManage modifyvm $vm_name --nic1 nat
@@ -63,7 +53,7 @@ VBoxManage modifyvm $vm_name --audio none
 
 echo "Create Disk and connect .iso..."
 vdi_file=$vm_dir/$vm_name/$vm_name_DISK.vdi
-VBoxManage createmedium disk --filename $vdi_file --size 20000 --format VDI
+VBoxManage createmedium disk --filename $vdi_file --size $(get_config "vm_disk_size_mb") --format VDI
 VBoxManage storagectl $vm_name --name "SATA Controller" --add sata \
     --controller IntelAhci
 VBoxManage storageattach $vm_name --storagectl "SATA Controller" --port 0 \
@@ -83,12 +73,17 @@ else
 templates_workaround_options=""
 fi
 
-VBoxManage unattended install $vm_name --user=$vm_user_name \
-    --password=$vm_user_password --country=$vm_country --locale=$vm_locale \
-    --time-zone=$vm_time_zone --hostname=$vm_hostname --iso=$iso_download_file \
+VBoxManage unattended install $vm_name \
+    --user=$(get_config "vm_user_name") \
+    --password=$(get_config "vm_user_password") \
+    --country=$(get_config "vm_country") \
+    --locale=$(get_config "vm_locale") \
+    --time-zone=$(get_config "vm_time_zone") \
+    --hostname=$(get_config "vm_hostname") \
+    --iso=$iso_download_file \
     $templates_workaround_options \
     --start-vm=gui
 
-echo "Finished script."
+echo "After the automatic installation has finished run ./vm-post-install.sh."
 exit 0
 ################################################################################
