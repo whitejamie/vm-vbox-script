@@ -31,4 +31,4 @@ VBoxManage storageattach $(get_config "vm_name") \
 echo "Now log into VM and mount the CDROM device to run the post installation scripts in the .iso..."
 echo "mkdir -p /root/post_install_scripts"
 echo "mount /dev/cdrom /root/post_install_scripts"
-echo "sh /root/post_install_scripts/hello_world.sh"
+echo "sh /root/post_install_scripts/hello-world.sh"

@@ -11,14 +11,19 @@ Scripts for automatically generating Virtual Machines using Virtual Box.
 
 # Instructions
 ## Linux host
+1. Run ```./vm-create.sh```.
+1. After automatic install of OS finishes run ```./vm-post-install.sh```.
+1. In the VM mount the cdrom that has the post install scripts:
+```
+mkdir -p /root/post_install_scripts
+mount /dev/cdrom /root/post_install_scripts
+sh /root/post_install_scripts/hello-world.sh
+```
 ## Windows host
 
 # TODO
-* Move common parameters between Linux and Windows scripts into one file.
-* Linux, .iso of post_install_scripts:
-```
-mkisofs -iso-level 3 -o ./scripts.iso ./post_install_scripts/
-```
+* Windows, use config.json
+* Windows host instructions
 * Windows, .iso of post_install_scripts:
 ```
 $source_dir = Join-Path -Path $pwd -ChildPath "scripts"

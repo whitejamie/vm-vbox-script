@@ -1,13 +1,30 @@
 #!/bin/bash
+# Script to automatically install a virtual machine and operating system based
+# on the config.json.
+#
+# Optional arguments:
+#    1. vm-create.sh INSTALL_DIR
+#
+# INSTALL_DIR: Directory where to save the virtual machine and virtual disk.
+#              Default is <dir of this script>/vm.
+#
+source $dir/lib/get_config.sh
+
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-source $dir/lib/get_config.sh
+if [ ! -z "$1" ] then
+    install_dir=$1
+    if [[ ! -d $install_dir ]]; then
+        mkdir -p $install_dir 
+    fi
+else
+    install_dir=$dir
+fi
 
 vm_name=$(get_config "vm_name")
 iso_web=$(get_config "iso_web")
 
-install_dir=$dir
-download_dir=$install_dir"/downloads"
+download_dir=$dir"/downloads"
 vm_dir=$install_dir"/vm"
 iso_file=${iso_web##http*\/}
 iso_download_file=$download_dir/$iso_file
