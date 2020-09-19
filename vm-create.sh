@@ -2,60 +2,101 @@
 # Script to automatically install a virtual machine and operating system based
 # on the config.json.
 #
-# Optional arguments:
-#    1. vm-create.sh INSTALL_DIR
+# Calling options:
+#    1. vm-create.sh
+#    2. vm-create.sh VM_NAME
+#    3. vm-create.sh VM_NAME INSTALL_DIR
 #
-# INSTALL_DIR: Directory where to save the virtual machine and virtual disk.
-#              Default is <dir of this script>/vm.
+# VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
+#               and is displayed in the VirtualBox Manager GUI.
+#               Default is name in config.json. 
 #
-source $dir/lib/get_config.sh
-
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-if [ ! -z "$1" ] then
-    install_dir=$1
-    if [[ ! -d $install_dir ]]; then
-        mkdir -p $install_dir 
-    fi
-else
-    install_dir=$dir
-fi
-
-vm_name=$(get_config "vm_name")
-iso_web=$(get_config "iso_web")
-
-download_dir=$dir"/downloads"
-vm_dir=$install_dir"/vm"
-iso_file=${iso_web##http*\/}
-iso_download_file=$download_dir/$iso_file
-
+# INSTALL_DIR : Directory where to save the virtual machine and virtual disk.
+#               Default is <dir of this script>/vm.
+#
 ################################################################################
-
 err_report() {
     echo "Error on line $1"
     exit 1
 }
 trap 'err_report $LINENO' ERR
 
+################################################################################
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source $dir/lib/get_config.sh
+
+echo "#########################################################################"
+echo "#    Installation details - vm-create                                   #"
+echo "#########################################################################"
+if [ ! -z "$1" ]; then
+    vm_name=$1
+else
+    vm_name=$(get_config "vm_name")
+fi
+echo {,:\ $}vm_name
+
+if [[ ! -z "$2" ]]; then
+    install_dir=$2
+else
+    install_dir=$dir"/vm"
+fi
+echo {,:\ $}install_dir
+
+vm_cpus=$(get_config "vm_cpus" -v)
+vm_memory_mb=$(get_config "vm_memory_mb" -v)
+vm_vram_mb=$(get_config "vm_vram_mb" -v)
+vm_disk_size_mb=$(get_config "vm_disk_size_mb" -v)
+vm_user_name=$(get_config "vm_user_name" -v)
+vm_user_password=$(get_config "vm_user_password" -v)
+vm_country=$(get_config "vm_country" -v)
+vm_locale=$(get_config "vm_locale" -v)
+vm_time_zone=$(get_config "vm_time_zone" -v)
+vm_hostname=$(get_config "vm_hostname" -v)
+iso_web=$(get_config "iso_web" -v)
+iso_file_hash=$(get_config "iso_file_hash" -v)
+ostype=$(get_config "ostype" -v)
+
+################################################################################
+
+download_dir=$dir"/downloads"
+iso_file=${iso_web##http*\/}
+iso_download_file=$download_dir/$iso_file
+
+################################################################################
+echo "#########################################################################"
+echo
+read -e -p "Type 'c' to continue with creating the VM: " choice
+if [[ ! "$choice" == [Cc]* ]]; then
+    echo "Stopping script."
+    exit 1
+fi
+
+################################################################################
+
+echo "Making directories..."
+mkdir -p $install_dir 
 mkdir -p $download_dir
 
+echo "Getting .iso..."
 wget -nc -P $download_dir $iso_web
 
 echo ".iso checksum verification..."
-echo "$(get_config "iso_file_hash") $iso_download_file" | sha256sum --check --status
+echo "$iso_file_hash $iso_download_file" | sha256sum --check --status
 if [ $? != 0 ]; then
   echo '.iso download checksum failed.'
-  exit 1
+  exit 2
 fi
 
 echo "Creating VM..."
-VBoxManage createvm --name $vm_name --ostype $(get_config "ostype") --register \
-    --basefolder $vm_dir
+VBoxManage createvm --name $vm_name --ostype $ostype --register \
+    --basefolder $install_dir
 
 echo "Set number of CPUs and memory..."
-VBoxManage modifyvm $vm_name --cpus $(get_config "vm_cpus")
+VBoxManage modifyvm $vm_name --cpus $vm_cpus
 VBoxManage modifyvm $vm_name --ioapic on
-VBoxManage modifyvm $vm_name --memory $(get_config "vm_memory_mb") --vram $(get_config "vm_vram_mb") 
+VBoxManage modifyvm $vm_name --memory $vm_memory_mb --vram $vm_vram_mb 
 
 echo "Set network..."
 VBoxManage modifyvm $vm_name --nic1 nat
@@ -69,8 +110,8 @@ echo "Disable audio..."
 VBoxManage modifyvm $vm_name --audio none
 
 echo "Create Disk and connect .iso..."
-vdi_file=$vm_dir/$vm_name/$vm_name_DISK.vdi
-VBoxManage createmedium disk --filename $vdi_file --size $(get_config "vm_disk_size_mb") --format VDI
+vdi_file=$install_dir/$vm_name/$vm_name_DISK.vdi
+VBoxManage createmedium disk --filename $vdi_file --size $vm_disk_size_mb --format VDI
 VBoxManage storagectl $vm_name --name "SATA Controller" --add sata \
     --controller IntelAhci
 VBoxManage storageattach $vm_name --storagectl "SATA Controller" --port 0 \
@@ -91,16 +132,18 @@ templates_workaround_options=""
 fi
 
 VBoxManage unattended install $vm_name \
-    --user=$(get_config "vm_user_name") \
-    --password=$(get_config "vm_user_password") \
-    --country=$(get_config "vm_country") \
-    --locale=$(get_config "vm_locale") \
-    --time-zone=$(get_config "vm_time_zone") \
-    --hostname=$(get_config "vm_hostname") \
+    --user=$vm_user_name \
+    --password=$vm_user_password \
+    --country=$vm_country \
+    --locale=$vm_locale \
+    --time-zone=$vm_time_zone \
+    --hostname=$vm_hostname \
     --iso=$iso_download_file \
     $templates_workaround_options \
     --start-vm=gui
 
-echo "After the automatic installation has finished run ./vm-post-install.sh."
+echo "After the automatic installation has finished run:"
+echo "./vm-post-install.sh $vm_name"
+
 exit 0
 ################################################################################

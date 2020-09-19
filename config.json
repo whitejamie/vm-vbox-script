@@ -1,5 +1,5 @@
 {
-    "vm_name": "centos7_20200919",
+    "vm_name": "centos7",
     "vm_hostname": "localhost.localdomain",
     "vm_user_name": "vboxuser",
     "vm_user_password": "changeme",
