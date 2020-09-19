@@ -3,9 +3,11 @@
 # on the config.json.
 #
 # Calling options:
-#    1. vm-create.sh
-#    2. vm-create.sh VM_NAME
-#    3. vm-create.sh VM_NAME INSTALL_DIR
+#    1. vm-create.sh CONFIG_JSON
+#    2. vm-create.sh CONFIG_JSON VM_NAME
+#    3. vm-create.sh CONFIG_JSON VM_NAME INSTALL_DIR
+#
+# CONFIG_JSON : Path to .json configuration file.
 #
 # VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
 #               and is displayed in the VirtualBox Manager GUI.
@@ -30,33 +32,36 @@ source $dir/lib/get_config.sh
 echo "#########################################################################"
 echo "#    Installation details - vm-create                                   #"
 echo "#########################################################################"
-if [ ! -z "$1" ]; then
-    vm_name=$1
+config_json=$1
+echo {,:\ $}config_json
+
+if [ ! -z "$2" ]; then
+    vm_name=$2
 else
-    vm_name=$(get_config "vm_name")
+    vm_name=$(get_config $config_json "vm_name")
 fi
 echo {,:\ $}vm_name
 
-if [[ ! -z "$2" ]]; then
-    install_dir=$2
+if [[ ! -z "$3" ]]; then
+    install_dir=$3
 else
     install_dir=$dir"/vm"
 fi
 echo {,:\ $}install_dir
 
-vm_cpus=$(get_config "vm_cpus" -v)
-vm_memory_mb=$(get_config "vm_memory_mb" -v)
-vm_vram_mb=$(get_config "vm_vram_mb" -v)
-vm_disk_size_mb=$(get_config "vm_disk_size_mb" -v)
-vm_user_name=$(get_config "vm_user_name" -v)
-vm_user_password=$(get_config "vm_user_password" -v)
-vm_country=$(get_config "vm_country" -v)
-vm_locale=$(get_config "vm_locale" -v)
-vm_time_zone=$(get_config "vm_time_zone" -v)
-vm_hostname=$(get_config "vm_hostname" -v)
-iso_web=$(get_config "iso_web" -v)
-iso_file_hash=$(get_config "iso_file_hash" -v)
-ostype=$(get_config "ostype" -v)
+vm_cpus=$(get_config $config_json "vm_cpus" -v)
+vm_memory_mb=$(get_config $config_json "vm_memory_mb" -v)
+vm_vram_mb=$(get_config $config_json "vm_vram_mb" -v)
+vm_disk_size_mb=$(get_config $config_json "vm_disk_size_mb" -v)
+vm_user_name=$(get_config $config_json "vm_user_name" -v)
+vm_user_password=$(get_config $config_json "vm_user_password" -v)
+vm_country=$(get_config $config_json "vm_country" -v)
+vm_locale=$(get_config $config_json "vm_locale" -v)
+vm_time_zone=$(get_config $config_json "vm_time_zone" -v)
+vm_hostname=$(get_config $config_json "vm_hostname" -v)
+iso_web=$(get_config $config_json "iso_web" -v)
+iso_file_hash=$(get_config $config_json "iso_file_hash" -v)
+ostype=$(get_config $config_json "ostype" -v)
 
 ################################################################################
 
@@ -143,7 +148,7 @@ VBoxManage unattended install $vm_name \
     --start-vm=gui
 
 echo "After the automatic installation has finished run:"
-echo "./vm-post-install.sh $vm_name"
+echo "./vm-post-install.sh $config_json $vm_name"
 
 exit 0
 ################################################################################

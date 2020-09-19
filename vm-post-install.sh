@@ -3,8 +3,10 @@
 # drive so it's available to be mounted and its scripts executed.
 #
 # Calling options:
-#    1. vm-post-install.sh
-#    2. vm-post-install.sh VM_NAME
+#    1. vm-post-install.sh CONFIG_JSON
+#    2. vm-post-install.sh CONFIG_JSON VM_NAME
+#
+# CONFIG_JSON : Path to .json configuration file.
 #
 # VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
 #               and is displayed in the VirtualBox Manager GUI.
@@ -17,10 +19,13 @@ source $dir/lib/get_config.sh
 echo "#########################################################################"
 echo "#    Installation details - vm-post-install                             #"
 echo "#########################################################################"
-if [ ! -z "$1" ]; then
-    vm_name=$1
+config_json=$1
+echo {,:\ $}config_json
+
+if [ ! -z "$2" ]; then
+    vm_name=$2
 else
-    vm_name=$(get_config "vm_name")
+    vm_name=$(get_config $config_json "vm_name")
 fi
 echo {,:\ $}vm_name
 
