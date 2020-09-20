@@ -14,7 +14,7 @@
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-source $dir/lib/get_config.sh
+source $dir/lib/get-config.sh
 
 echo "#########################################################################"
 echo "#    Installation details - vm-post-install                             #"
@@ -25,7 +25,7 @@ echo {,:\ $}config_json
 if [ ! -z "$2" ]; then
     vm_name=$2
 else
-    vm_name=$(get_config $config_json "vm_name")
+    vm_name=$(get-config $config_json "vm_name")
 fi
 echo {,:\ $}vm_name
 

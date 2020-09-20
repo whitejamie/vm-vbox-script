@@ -1,8 +1,8 @@
 #!/bin/bash
 # Script that echoes the json value for the input argument json name.
 # Usage example:
-#     1. vm_hostname=$(get_config CONFIG_JSON JSON_KEY)
-#     2. vm_hostname=$(get_config CONFIG_JSON JSON_KEY -v)
+#     1. vm_hostname=$(get-config CONFIG_JSON JSON_KEY)
+#     2. vm_hostname=$(get-config CONFIG_JSON JSON_KEY -v)
 #       
 #  CONFIG_JSON : Path to .json configuration file.
 #
@@ -12,7 +12,7 @@
 #        is still echoed to stdout.
 #
 
-function get_config {
+function get-config {
     config_json=$1
     name=$2
 

@@ -20,6 +20,7 @@ mount /dev/cdrom /root/post_install_scripts
 sh /root/post_install_scripts/hello-world.sh
 ```
 ## Windows host
+1. Run PowerShell as admin and then call Set-ExecutionPolicy RemoteSigned
 
 # TODO
 * Windows, use config.json

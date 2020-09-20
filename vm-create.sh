@@ -11,7 +11,7 @@
 #
 # VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
 #               and is displayed in the VirtualBox Manager GUI.
-#               Default is name in config.json. 
+#               Default name is in config.json. 
 #
 # INSTALL_DIR : Directory where to save the virtual machine and virtual disk.
 #               Default is <dir of this script>/vm.
@@ -27,7 +27,7 @@ trap 'err_report $LINENO' ERR
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-source $dir/lib/get_config.sh
+source $dir/lib/get-config.sh
 
 echo "#########################################################################"
 echo "#    Installation details - vm-create                                   #"
@@ -38,7 +38,7 @@ echo {,:\ $}config_json
 if [ ! -z "$2" ]; then
     vm_name=$2
 else
-    vm_name=$(get_config $config_json "vm_name")
+    vm_name=$(get-config $config_json "vm_name")
 fi
 echo {,:\ $}vm_name
 
@@ -49,19 +49,19 @@ else
 fi
 echo {,:\ $}install_dir
 
-vm_cpus=$(get_config $config_json "vm_cpus" -v)
-vm_memory_mb=$(get_config $config_json "vm_memory_mb" -v)
-vm_vram_mb=$(get_config $config_json "vm_vram_mb" -v)
-vm_disk_size_mb=$(get_config $config_json "vm_disk_size_mb" -v)
-vm_user_name=$(get_config $config_json "vm_user_name" -v)
-vm_user_password=$(get_config $config_json "vm_user_password" -v)
-vm_country=$(get_config $config_json "vm_country" -v)
-vm_locale=$(get_config $config_json "vm_locale" -v)
-vm_time_zone=$(get_config $config_json "vm_time_zone" -v)
-vm_hostname=$(get_config $config_json "vm_hostname" -v)
-iso_web=$(get_config $config_json "iso_web" -v)
-iso_file_hash=$(get_config $config_json "iso_file_hash" -v)
-ostype=$(get_config $config_json "ostype" -v)
+vm_cpus=$(get-config $config_json "vm_cpus" -v)
+vm_memory_mb=$(get-config $config_json "vm_memory_mb" -v)
+vm_vram_mb=$(get-config $config_json "vm_vram_mb" -v)
+vm_disk_size_mb=$(get-config $config_json "vm_disk_size_mb" -v)
+vm_user_name=$(get-config $config_json "vm_user_name" -v)
+vm_user_password=$(get-config $config_json "vm_user_password" -v)
+vm_country=$(get-config $config_json "vm_country" -v)
+vm_locale=$(get-config $config_json "vm_locale" -v)
+vm_time_zone=$(get-config $config_json "vm_time_zone" -v)
+vm_hostname=$(get-config $config_json "vm_hostname" -v)
+iso_web=$(get-config $config_json "iso_web" -v)
+iso_file_hash=$(get-config $config_json "iso_file_hash" -v)
+ostype=$(get-config $config_json "ostype" -v)
 
 ################################################################################
 

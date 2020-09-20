@@ -1,46 +1,78 @@
-﻿# Run powershell as admin and then call Set-ExecutionPolicy RemoteSigned
-$ErrorActionPreference = "Stop"
-
-$vm_name = "auto_centos_vm_test1"
-$vm_hostname = "vboxhost.localdomain"
-$vm_user_name = "vboxuser"
-$vm_user_password = "changeme"
-# For locale and country codes see:
-#  https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
-$vm_country = "ES"
-$vm_locale = "en_GB"
-$vm_time_zone = "CEST"
-
-
-
-# Checksum for iso image from:
-#     https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2003?action=show&redirect=Manuals%2FReleaseNotes%2FCentOS7
-$iso_web = "http://centos.uvigo.es/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
-$iso_file_hash = "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193"
-$ostype = "RedHat_64"
+﻿# Script to automatically install a virtual machine and operating system based
+# on the config.json.
+#
+# .\vm-create-win.ps1 [OPTIONS...]
+#
+#  OPTIONS
+#      -config 
+#          Path to .json configuration file.
+#      -vm_name
+#          Name given to virtual machine, used as argument to VBoxManage and is 
+#          displayed in the VirtualBox Manager GUI.
+#          Default name is in config.json.
+#      -install_dir
+#          Directory where to save the virtual machine and virtual disk.
+#          Default is $pwd\vm.
+#
+################################################################################
+param ($config_json="$pwd\config.json", 
+       $vm_name,
+       $install_dir)
 
 ################################################################################
+$ErrorActionPreference = "Stop"
 
-$install_dir = pwd
-$download_dir = "$install_dir\downloads"
-$vm_dir = "$install_dir\vm"
-$iso_file = Split-Path -Path $iso_web -Leaf
+################################################################################
+echo "#########################################################################"
+echo "#    Installation details - vm-create-win                               #"
+echo "#########################################################################"
+
+$config = Get-Content -Raw -Path $config_json | ConvertFrom-Json   
+
+if ([string]::IsNullOrWhiteSpace($vm_name)){
+    $vm_name = $config.vm_name
+}
+else{
+    $config.vm_name = $vm_name
+}
+
+if ([string]::IsNullOrWhiteSpace($install_dir)){
+    $install_dir = "$pwd\vm"
+}
+echo "config_json : $config_json"
+echo "install_dir : $install_dir"
+echo $config
+
+################################################################################
+$download_dir = "$pwd\downloads"
+$iso_file = Split-Path -Path $config.iso_web -Leaf
 $iso_download_file = "$download_dir\$iso_file"
 
-echo "Downloading .iso..."
+################################################################################
+echo "#########################################################################"
+echo ""
+Write-Warning "Continue with creating the VM?" -WarningAction Inquire
+
+################################################################################
+echo "Making directories..."
+If(!(test-path $install_dir))
+{
+    New-Item -ItemType Directory -Force -Path $install_dir
+}
 If(!(test-path $download_dir))
 {
     New-Item -ItemType Directory -Force -Path $download_dir
 }
 
+echo "Getting .iso..."
 If(!(test-path $iso_download_file))
 {
-    wget $iso_web -OutFile $iso_download_file
+    wget $config.iso_web -OutFile $iso_download_file
 }
 
 echo ".iso checksum verification..."
 $FileHash = Get-FileHash $iso_download_file -Algorithm SHA256
-if($FileHash.Hash.ToString() -ne $iso_file_hash)
+if($FileHash.Hash.ToString() -ne $config.iso_file_hash)
 {
     write-host ".iso download checksum failed."
     exit 1
@@ -49,8 +81,8 @@ if($FileHash.Hash.ToString() -ne $iso_file_hash)
 echo "Creating VM..."
 $env:Path += ";C:\Program Files\Oracle\VirtualBox"
 
-VBoxManage createvm --name $vm_name --ostype $ostype --register `
-    --basefolder $vm_dir
+VBoxManage createvm --name $config.vm_name --ostype $ostype --register `
+    --basefolder $install_dir
 
 # This LastExitCode check is not necessary since we've already set ErrorActionPreference
 if($LastExitCode -ne 0)
@@ -60,39 +92,47 @@ if($LastExitCode -ne 0)
 }
 
 echo "Set number of CPUs and memory..."
-VBoxManage modifyvm $vm_name --cpus 1
-VBoxManage modifyvm $vm_name --ioapic on
-VBoxManage modifyvm $vm_name --memory 2048 --vram 16 
+VBoxManage modifyvm $config.vm_name --cpus $([Int32]$config.vm_cpus)
+VBoxManage modifyvm $config.vm_name --ioapic on
+VBoxManage modifyvm $config.vm_name --memory $([Int32]$config.vm_memory_mb) --vram $([Int32]$config.vm_vram_mb) 
 
 echo "Set network..."
-VBoxManage modifyvm $vm_name --nic1 nat
+VBoxManage modifyvm $config.vm_name --nic1 nat
 
 echo "Disable USB..."
-VBoxManage modifyvm $vm_name --usb off
-VBoxManage modifyvm $vm_name --usbehci off
-VBoxManage modifyvm $vm_name --usbxhci off
+VBoxManage modifyvm $config.vm_name --usb off
+VBoxManage modifyvm $config.vm_name --usbehci off
+VBoxManage modifyvm $config.vm_name --usbxhci off
 
 echo "Disable audio..."
-VBoxManage modifyvm $vm_name --audio none
+VBoxManage modifyvm $config.vm_name --audio none
 
 echo "Create Disk and connect .iso..."
-$vdi_file="$vm_dir\$vm_name\$vm_name_DISK.vdi"
-VBoxManage createmedium disk --filename $vdi_file --size 20000 --format VDI
-VBoxManage storagectl $vm_name --name "SATA Controller" --add sata `
+$vdi_file="$install_dir\$($config.vm_name)\$($config.vm_name)_DISK.vdi"
+VBoxManage createmedium disk --filename $vdi_file --size $([Int32]$config.vm_disk_size_mb) --format VDI
+VBoxManage storagectl $config.vm_name --name "SATA Controller" --add sata `
     --controller IntelAhci
-VBoxManage storageattach $vm_name --storagectl "SATA Controller" --port 0 `
+VBoxManage storageattach $config.vm_name --storagectl "SATA Controller" --port 0 `
     --device 0 --type hdd --medium  $vdi_file
-VBoxManage storagectl $vm_name --name "IDE Controller" --add ide `
+VBoxManage storagectl $config.vm_name --name "IDE Controller" --add ide `
     --controller PIIX4
-VBoxManage storageattach $vm_name --storagectl "IDE Controller" --port 1 `
+VBoxManage storageattach $config.vm_name --storagectl "IDE Controller" --port 1 `
     --device 0 --type dvddrive --medium $iso_download_file
-VBoxManage modifyvm $vm_name --boot1 dvd --boot2 disk --boot3 none --boot4 none
+VBoxManage modifyvm $config.vm_name --boot1 dvd --boot2 disk --boot3 none --boot4 none
 
 echo "Unattended install..."
-VBoxManage unattended install $vm_name --user=$vm_user_name `
-    --password=$vm_user_password --country=$vm_country --locale=$vm_locale `
-    --time-zone=$vm_time_zone --hostname=$vm_hostname --iso=$iso_download_file `
+VBoxManage unattended install $config.vm_name `
+    --user=$config.vm_user_name `
+    --password=$config.vm_user_password `
+    --country=$config.vm_country `
+    --locale=$config.vm_locale `
+    --time-zone=$config.vm_time_zone `
+    --hostname=$config.vm_hostname `
+    --iso=$iso_download_file `
     --start-vm=gui
 
-echo "Script finished. Virtual Box will continue to install the VM..."
+echo "After the automatic installation has finished run:"
+echo "./vm-post-install.sh $($config_json) $($config.vm_name)"
+
 exit 0
+################################################################################
