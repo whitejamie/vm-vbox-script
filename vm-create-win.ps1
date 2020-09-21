@@ -81,8 +81,7 @@ if($FileHash.Hash.ToString() -ne $config.iso_file_hash)
 echo "Creating VM..."
 $env:Path += ";C:\Program Files\Oracle\VirtualBox"
 
-VBoxManage createvm --name $config.vm_name --ostype $ostype --register `
-    --basefolder $install_dir
+VBoxManage createvm --name $config.vm_name --ostype $config.ostype --register --basefolder $install_dir
 
 # This LastExitCode check is not necessary since we've already set ErrorActionPreference
 if($LastExitCode -ne 0)
@@ -92,9 +91,9 @@ if($LastExitCode -ne 0)
 }
 
 echo "Set number of CPUs and memory..."
-VBoxManage modifyvm $config.vm_name --cpus $([Int32]$config.vm_cpus)
+VBoxManage modifyvm $config.vm_name --cpus $config.vm_cpus
 VBoxManage modifyvm $config.vm_name --ioapic on
-VBoxManage modifyvm $config.vm_name --memory $([Int32]$config.vm_memory_mb) --vram $([Int32]$config.vm_vram_mb) 
+VBoxManage modifyvm $config.vm_name --memory $config.vm_memory_mb --vram $config.vm_vram_mb 
 
 echo "Set network..."
 VBoxManage modifyvm $config.vm_name --nic1 nat
@@ -109,7 +108,7 @@ VBoxManage modifyvm $config.vm_name --audio none
 
 echo "Create Disk and connect .iso..."
 $vdi_file="$install_dir\$($config.vm_name)\$($config.vm_name)_DISK.vdi"
-VBoxManage createmedium disk --filename $vdi_file --size $([Int32]$config.vm_disk_size_mb) --format VDI
+VBoxManage createmedium disk --filename $vdi_file --size $config.vm_disk_size_mb --format VDI
 VBoxManage storagectl $config.vm_name --name "SATA Controller" --add sata `
     --controller IntelAhci
 VBoxManage storageattach $config.vm_name --storagectl "SATA Controller" --port 0 `
@@ -122,13 +121,13 @@ VBoxManage modifyvm $config.vm_name --boot1 dvd --boot2 disk --boot3 none --boot
 
 echo "Unattended install..."
 VBoxManage unattended install $config.vm_name `
-    --user=$config.vm_user_name `
-    --password=$config.vm_user_password `
-    --country=$config.vm_country `
-    --locale=$config.vm_locale `
-    --time-zone=$config.vm_time_zone `
-    --hostname=$config.vm_hostname `
-    --iso=$iso_download_file `
+    --user=$($config.vm_user_name) `
+    --password=$($config.vm_user_password) `
+    --country=$($config.vm_country) `
+    --locale=$($config.vm_locale) `
+    --time-zone=$($config.vm_time_zone) `
+    --hostname=$($config.vm_hostname) `
+    --iso=$($iso_download_file) `
     --start-vm=gui
 
 echo "After the automatic installation has finished run:"

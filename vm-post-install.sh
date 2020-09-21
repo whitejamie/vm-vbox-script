@@ -31,6 +31,13 @@ echo {,:\ $}vm_name
 
 echo "#########################################################################"
 
+echo "First unattach any existing storage"
+VBoxManage storageattach $vm_name \
+    --storagectl "IDE Controller" \
+    --port 1 --device 0 --type dvddrive \
+    --medium "emptydrive" \
+    --forceunmount
+
 temp_dir=$dir/temp
 iso_file=$temp_dir/scripts.iso
 
@@ -39,14 +46,7 @@ mkdir -p $temp_dir
 
 mkisofs -iso-level 3 -o $iso_file $dir/post_install_scripts
 
-
-# First unattach any existing storage
-VBoxManage storageattach $vm_name \
-    --storagectl "IDE Controller" \
-    --port 1 --device 0 --type dvddrive \
-    --medium "emptydrive" \
-    --forceunmount
-
+echo "Insert .iso into dvddrive"
 VBoxManage storageattach $vm_name \
     --storagectl "IDE Controller" \
     --port 1 --device 0 --type dvddrive \
@@ -56,5 +56,5 @@ echo
 echo "Now log into VM as root and mount the CDROM device to run the post installation scripts in the .iso..."
 echo "mkdir -p /root/post_install_scripts"
 echo "mount /dev/cdrom /root/post_install_scripts"
-echo "sh /root/post_install_scripts/hello-world.sh"
-echo "sh /root/post_install_scripts/setup-ethernet.sh"
+echo "sh /root/post_install_scripts/hello_world.sh"
+echo "sh /root/post_install_scripts/setup_ethernet.sh"
