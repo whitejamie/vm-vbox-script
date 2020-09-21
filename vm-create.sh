@@ -1,77 +1,112 @@
 #!/bin/bash
-################################################################################
-# README
-# TODO:
-#    - Add notes to read me about workaround
-#          There's a bug in Virtual Box's VBoxManage unattended install. It 
-#          looks in the wrong location for virtualbox/UnattendedTemplates. On 
-#          Debian/RedHat host machines it is located here: 
-#          /usr/lib/virtualbox/UnattendedTemplates/.
-#          See https://www.virtualbox.org/ticket/17335
+# Script to automatically install a virtual machine and operating system based
+# on the config.json.
 #
-#    - Post installation script for further modifications?
-#    - Use input argument for vm_name, or append date time
-#    - SSH server setup, etc.
-#    - Move parameters to external file shared with other scripts
-#    - Set key mapping, get full list and set (as super user):
-#        localectl list-keymaps
-#        localectl set-keymap us-alt-intl
-#    - By default ethernet isn't enabled and connected, need to script:
-#        ethernet_dev_name=$(nmcli -f TYPE,DEVICE device | grep ^ethernet | awk '{print $2}')
-#        nmcli con add type ethernet con-name my-office ifname $ethernet_device_name
-#        nmcli con up my-office
+# Calling options:
+#    1. vm-create.sh 
+#    2. vm-create.sh CONFIG_JSON
+#    3. vm-create.sh CONFIG_JSON VM_NAME
+#    4. vm-create.sh CONFIG_JSON VM_NAME INSTALL_DIR
+#
+# CONFIG_JSON : Path to .json configuration file, default is ./config.json.
+#
+# VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
+#               and is displayed in the VirtualBox Manager GUI.
+#               Default name is in config.json. 
+#
+# INSTALL_DIR : Directory where to save the virtual machine and virtual disk.
+#               Default is <dir of this script>/vm.
 #
 ################################################################################
-#vm_name=$1
-vm_name="auto_centos_vm_test1"
-vm_hostname="localhost.localdomain"
-vm_user_name="vboxuser"
-vm_user_password="changeme"
-vm_country="ES"
-# For locale and country codes see:
-#  https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
-vm_locale="en_GB"
-vm_time_zone="CEST"
-
-# Checksum for iso image from:
-#     https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2003?action=show&redirect=Manuals%2FReleaseNotes%2FCentOS7
-iso_web="http://centos.uvigo.es/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
-iso_file_hash="659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193"
-ostype="RedHat_64"
-
-################################################################################
-
-install_dir=`pwd`
-download_dir=$install_dir"/downloads"
-vm_dir=$install_dir"/vm"
-iso_file=${iso_web##http*\/}
-iso_download_file=$download_dir/$iso_file
-
 err_report() {
     echo "Error on line $1"
     exit 1
 }
 trap 'err_report $LINENO' ERR
 
+################################################################################
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+source $dir/lib/get-config.sh
+
+echo "#########################################################################"
+echo "#    Installation details - vm-create                                   #"
+echo "#########################################################################"
+if [ ! -z "$1" ]; then
+    config_json=$1
+else
+    config_json=$dir"/config.json"
+fi
+echo {,:\ $}config_json
+
+if [ ! -z "$2" ]; then
+    vm_name=$2
+else
+    vm_name=$(get-config $config_json "vm_name")
+fi
+echo {,:\ $}vm_name
+
+if [[ ! -z "$3" ]]; then
+    install_dir=$3
+else
+    install_dir=$dir"/vm"
+fi
+echo {,:\ $}install_dir
+
+vm_cpus=$(get-config $config_json "vm_cpus" -v)
+vm_memory_mb=$(get-config $config_json "vm_memory_mb" -v)
+vm_vram_mb=$(get-config $config_json "vm_vram_mb" -v)
+vm_disk_size_mb=$(get-config $config_json "vm_disk_size_mb" -v)
+vm_user_name=$(get-config $config_json "vm_user_name" -v)
+vm_user_password=$(get-config $config_json "vm_user_password" -v)
+vm_country=$(get-config $config_json "vm_country" -v)
+vm_locale=$(get-config $config_json "vm_locale" -v)
+vm_time_zone=$(get-config $config_json "vm_time_zone" -v)
+vm_hostname=$(get-config $config_json "vm_hostname" -v)
+iso_web=$(get-config $config_json "iso_web" -v)
+iso_file_hash=$(get-config $config_json "iso_file_hash" -v)
+ostype=$(get-config $config_json "ostype" -v)
+
+################################################################################
+
+download_dir=$dir"/downloads"
+iso_file=${iso_web##http*\/}
+iso_download_file=$download_dir/$iso_file
+
+################################################################################
+echo "#########################################################################"
+echo
+read -e -p "Type 'c' to continue with creating the VM: " choice
+if [[ ! "$choice" == [Cc]* ]]; then
+    echo "Stopping script."
+    exit 1
+fi
+
+################################################################################
+
+echo "Making directories..."
+mkdir -p $install_dir 
 mkdir -p $download_dir
 
+echo "Getting .iso..."
 wget -nc -P $download_dir $iso_web
 
 echo ".iso checksum verification..."
 echo "$iso_file_hash $iso_download_file" | sha256sum --check --status
 if [ $? != 0 ]; then
   echo '.iso download checksum failed.'
-  exit 1
+  exit 2
 fi
 
 echo "Creating VM..."
 VBoxManage createvm --name $vm_name --ostype $ostype --register \
-    --basefolder $vm_dir
+    --basefolder $install_dir
 
 echo "Set number of CPUs and memory..."
-VBoxManage modifyvm $vm_name --cpus 1
+VBoxManage modifyvm $vm_name --cpus $vm_cpus
 VBoxManage modifyvm $vm_name --ioapic on
-VBoxManage modifyvm $vm_name --memory 2048 --vram 16 
+VBoxManage modifyvm $vm_name --memory $vm_memory_mb --vram $vm_vram_mb 
 
 echo "Set network..."
 VBoxManage modifyvm $vm_name --nic1 nat
@@ -85,8 +120,8 @@ echo "Disable audio..."
 VBoxManage modifyvm $vm_name --audio none
 
 echo "Create Disk and connect .iso..."
-vdi_file=$vm_dir/$vm_name/$vm_name_DISK.vdi
-VBoxManage createmedium disk --filename $vdi_file --size 20000 --format VDI
+vdi_file=$install_dir/$vm_name/$vm_name_DISK.vdi
+VBoxManage createmedium disk --filename $vdi_file --size $vm_disk_size_mb --format VDI
 VBoxManage storagectl $vm_name --name "SATA Controller" --add sata \
     --controller IntelAhci
 VBoxManage storageattach $vm_name --storagectl "SATA Controller" --port 0 \
@@ -106,12 +141,19 @@ else
 templates_workaround_options=""
 fi
 
-VBoxManage unattended install $vm_name --user=$vm_user_name \
-    --password=$vm_user_password --country=$vm_country --locale=$vm_locale \
-    --time-zone=$vm_time_zone --hostname=$vm_hostname --iso=$iso_download_file \
+VBoxManage unattended install $vm_name \
+    --user=$vm_user_name \
+    --password=$vm_user_password \
+    --country=$vm_country \
+    --locale=$vm_locale \
+    --time-zone=$vm_time_zone \
+    --hostname=$vm_hostname \
+    --iso=$iso_download_file \
     $templates_workaround_options \
     --start-vm=gui
 
-echo "Finished script."
+echo "After the automatic installation has finished run:"
+echo "./vm-post-install.sh $config_json $vm_name"
+
 exit 0
 ################################################################################

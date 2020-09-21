@@ -1,0 +1,16 @@
+{
+    "vm_name": "centos7",
+    "vm_hostname": "localhost.localdomain",
+    "vm_user_name": "vboxuser",
+    "vm_user_password": "changeme",
+    "vm_country": "ES",
+    "vm_locale": "en_GB",
+    "vm_time_zone": "CEST",
+    "vm_cpus": 1,
+    "vm_memory_mb": 2048,
+    "vm_vram_mb": 16,
+    "vm_disk_size_mb": 20000,
+    "iso_web": "http://centos.uvigo.es/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso",
+    "iso_file_hash": "659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
+    "ostype": "RedHat_64"
+}
