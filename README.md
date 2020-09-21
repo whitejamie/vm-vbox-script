@@ -4,33 +4,20 @@ Scripts for automatically generating Virtual Machines using Virtual Box.
 # Dependencies
 * [VirtualBox](https://www.virtualbox.org/)
 ## Linux host
-* Bash command line utilities: wget, jq, 
+* Bash command line utilities: wget, jq, mkisofs. 
 
 ## Windows host
 * PowerShell scripts depends on a 3rd party library to create an .iso file, [New-ISOFile](https://github.com/whitejamie/library/tree/master/3rdparty/PowerShell/New-ISOFile). This has been copied to the ```/library``` folder.
 
 # Instructions
+Both Linux and Windows scripts use a .json config file and some of these parameters can be set via the command line calls to create the virtual machines. See each script's documentation for details.
 ## Linux host
 1. Run ```./vm-create.sh```.
-1. After automatic install of OS finishes run ```./vm-post-install.sh```.
-1. In the VM mount the cdrom that has the post install scripts:
-```
-mkdir -p /root/post_install_scripts
-mount /dev/cdrom /root/post_install_scripts
-sh /root/post_install_scripts/hello-world.sh
-```
+1. After automatic install of OS finishes run ```./vm-post-install.sh```. Follow the onscreen instructions to mount the .iso in the VM to run the scripts.
 ## Windows host
-1. Run PowerShell as admin and then call Set-ExecutionPolicy RemoteSigned
-
-# TODO
-* Windows, use config.json
-* Windows host instructions
-* Windows, .iso of post_install_scripts:
-```
-$source_dir = Join-Path -Path $pwd -ChildPath "scripts"
-$target_iso = Join-Path -Path $pwd -ChildPath "scripts.iso"
-$Get-ChildItem "$source_dir" | New-IsoFile -Path $target_iso
-```
+1. Run PowerShell as admin and then call ```Set-ExecutionPolicy RemoteSigned```.
+1. Run  ```.\vm-create-win.ps1```.
+1. After automatic install of OS finishes run ```.\vm-post-install-win.ps1```. Follow the onscreen instructions to mount the .iso in the VM to run the scripts.
 
 # Additional information
 * There's a bug in Virtual Box's VBoxManage unattended install. It looks in the wrong location for virtualbox/UnattendedTemplates. On Debian/RedHat host machines it is located here: /usr/lib/virtualbox/UnattendedTemplates/. See https://www.virtualbox.org/ticket/17335.
