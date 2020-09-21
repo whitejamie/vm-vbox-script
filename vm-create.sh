@@ -3,11 +3,12 @@
 # on the config.json.
 #
 # Calling options:
-#    1. vm-create.sh CONFIG_JSON
-#    2. vm-create.sh CONFIG_JSON VM_NAME
-#    3. vm-create.sh CONFIG_JSON VM_NAME INSTALL_DIR
+#    1. vm-create.sh 
+#    2. vm-create.sh CONFIG_JSON
+#    3. vm-create.sh CONFIG_JSON VM_NAME
+#    4. vm-create.sh CONFIG_JSON VM_NAME INSTALL_DIR
 #
-# CONFIG_JSON : Path to .json configuration file.
+# CONFIG_JSON : Path to .json configuration file, default is ./config.json.
 #
 # VM_NAME     : Name given to virtual machine, used as argument to VBoxManage 
 #               and is displayed in the VirtualBox Manager GUI.
@@ -32,7 +33,11 @@ source $dir/lib/get-config.sh
 echo "#########################################################################"
 echo "#    Installation details - vm-create                                   #"
 echo "#########################################################################"
-config_json=$1
+if [ ! -z "$1" ]; then
+    config_json=$1
+else
+    config_json=$dir"/config.json"
+fi
 echo {,:\ $}config_json
 
 if [ ! -z "$2" ]; then
