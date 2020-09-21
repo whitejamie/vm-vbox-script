@@ -21,5 +21,5 @@ Some of the source code referenced http://tools.start-automating.com/Install-Exp
 ```
 $source_dir = Join-Path -Path $pwd -ChildPath "scripts"
 $target_iso = Join-Path -Path $pwd -ChildPath "scripts.iso"
-$Get-ChildItem "$source_dir" | New-IsoFile -Path $target_iso
+Get-ChildItem "$source_dir" | New-IsoFile -Path $target_iso
 ```
