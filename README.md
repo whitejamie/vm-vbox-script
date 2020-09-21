@@ -23,5 +23,9 @@ Both Linux and Windows scripts use a .json config file and some of these paramet
 The Linux script works around this issue by testing the location of Virtual Box's ```/UnattendedTemplates``` directory.
 * For vm_locale configuration see locale and country https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
 * CentOS-7-x86_64-Minimal-2003
-  * Use ```./post_install_scripts/setup_ethernet.sh``` to enable network connection.
   * .iso [checksum](https://wiki.centos.org/action/show/Manuals/ReleaseNotes/CentOS7.2003?action=show&redirect=Manuals%2FReleaseNotes%2FCentOS7) source.
+  * Use ```./post_install_scripts/setup_ethernet.sh``` to enable network connection.
+  * Upgrade: ```sudo yum upgrade -y```
+  * Add user as sudoer: ```gpasswd -a vboxuser wheel```
+  * Change default passwords: ```sudo passwd root``` and ```sudo passwd vboxuser```
+  * Get SHA256 ECDSA key fingerprint for verification when creating a secure shell SSH: ```ssh-keygen -l -f /etc/ssh/ssh_host_ecdsa.pub```
