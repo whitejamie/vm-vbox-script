@@ -4,7 +4,7 @@
 # .\vm-create-win.ps1 [OPTIONS...]
 #
 #  OPTIONS
-#      -config 
+#      -config_json 
 #          Path to .json configuration file.
 #      -vm_name
 #          Name given to virtual machine, used as argument to VBoxManage and is 
@@ -15,10 +15,11 @@
 #          Default is $pwd\vm.
 #
 ################################################################################
-param ($config_json="$pwd\config.json", 
+param ($config_json = [IO.Path]::Combine($pwd, 'config.json'), 
        $vm_name,
        $install_dir)
 
+$download_dir = [IO.Path]::Combine($pwd, 'downloads')
 ################################################################################
 $ErrorActionPreference = "Stop"
 
@@ -37,16 +38,16 @@ else{
 }
 
 if ([string]::IsNullOrWhiteSpace($install_dir)){
-    $install_dir = "$pwd\vm"
+    $install_dir = [IO.Path]::Combine($pwd, 'vm')
 }
 echo "config_json : $config_json"
 echo "install_dir : $install_dir"
 echo $config
 
 ################################################################################
-$download_dir = "$pwd\downloads"
+$download_dir = [IO.Path]::Combine($pwd, 'downloads')
 $iso_file = Split-Path -Path $config.iso_web -Leaf
-$iso_download_file = "$download_dir\$iso_file"
+$iso_download_file = [IO.Path]::Combine($download_dir, $iso_file)
 
 ################################################################################
 echo "#########################################################################"
@@ -107,7 +108,7 @@ echo "Disable audio..."
 VBoxManage modifyvm $config.vm_name --audio none
 
 echo "Create Disk and connect .iso..."
-$vdi_file="$install_dir\$($config.vm_name)\$($config.vm_name)_DISK.vdi"
+$vdi_file = [IO.Path]::Combine($install_dir, $($config.vm_name), "$($config.vm_name)_DISK.vdi")
 VBoxManage createmedium disk --filename $vdi_file --size $config.vm_disk_size_mb --format VDI
 VBoxManage storagectl $config.vm_name --name "SATA Controller" --add sata `
     --controller IntelAhci
@@ -131,7 +132,7 @@ VBoxManage unattended install $config.vm_name `
     --start-vm=gui
 
 echo "After the automatic installation has finished run:"
-echo "./vm-post-install.sh $($config_json) $($config.vm_name)"
+echo ".\vm-post-install-win.ps1 $($config_json) $($config.vm_name)"
 
 exit 0
 ################################################################################
