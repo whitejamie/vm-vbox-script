@@ -132,7 +132,7 @@ VBoxManage unattended install $config.vm_name `
     --start-vm=gui
 
 echo "After the automatic installation has finished run:"
-echo ".\vm-post-install-win.ps1 $($config_json) $($config.vm_name)"
+echo ".\vm-post-install-win.ps1 -config_json $($config_json) -vm_name $($config.vm_name)"
 
 exit 0
 ################################################################################

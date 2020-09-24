@@ -5,7 +5,7 @@
 #    1. vm-post-install-win.ps1 [OPTIONS...]
 #
 #  OPTIONS
-#      -config 
+#      -config_json 
 #          Path to .json configuration file.
 #      -vm_name
 #          Name given to virtual machine, used as argument to VBoxManage and is 
