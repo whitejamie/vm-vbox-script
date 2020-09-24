@@ -13,7 +13,7 @@
 #          Default name is in config.json.
 #
 ################################################################################
-param ($config_json="$pwd\config.json", 
+param ($config_json = [IO.Path]::Combine($pwd, 'config.json'), 
        $vm_name)
 
 ################################################################################
@@ -21,7 +21,8 @@ $ErrorActionPreference = "Stop"
 
 ################################################################################
 # Register required functions and tools
-. $pwd\lib\3rdparty\PowerShell\New-ISOFile\Create-ISO.ps1
+$create_iso_path = [IO.Path]::Combine($pwd, 'lib', '3rdparty', 'PowerShell', 'New-ISOFile', 'Create-ISO.ps1')
+. $create_iso_path
 $env:Path += ";C:\Program Files\Oracle\VirtualBox"
 
 ################################################################################
@@ -50,8 +51,8 @@ VBoxManage storageattach $config.vm_name `
     --medium "emptydrive" `
     --forceunmount
 
-$temp_dir = "$pwd\temp"
-$iso_file = "$temp_dir\scripts.iso"
+$temp_dir = [IO.Path]::Combine($pwd, 'temp')
+$iso_file = [IO.Path]::Combine($temp_dir, 'scripts.iso')
 
 If((test-path $temp_dir))
 {
@@ -59,7 +60,8 @@ If((test-path $temp_dir))
 }
 New-Item -ItemType Directory -Force -Path $temp_dir
 
-Get-ChildItem "$pwd\post_install_scripts" | New-IsoFile -Path $iso_file
+$post_install_scripts_dir = [IO.Path]::Combine($pwd, 'post_install_scripts')
+Get-ChildItem $post_install_scripts_dir | New-IsoFile -Path $iso_file
 
 echo "Insert .iso into dvddrive"
 VBoxManage storageattach $config.vm_name `
