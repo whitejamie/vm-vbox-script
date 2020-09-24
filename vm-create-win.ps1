@@ -4,7 +4,7 @@
 # .\vm-create-win.ps1 [OPTIONS...]
 #
 #  OPTIONS
-#      -config 
+#      -config_json 
 #          Path to .json configuration file.
 #      -vm_name
 #          Name given to virtual machine, used as argument to VBoxManage and is 
@@ -131,7 +131,7 @@ VBoxManage unattended install $config.vm_name `
     --start-vm=gui
 
 echo "After the automatic installation has finished run:"
-echo "./vm-post-install.sh $($config_json) $($config.vm_name)"
+echo ".\vm-post-install-win.ps1 $($config_json) $($config.vm_name)"
 
 exit 0
 ################################################################################
